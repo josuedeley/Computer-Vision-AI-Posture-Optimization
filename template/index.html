@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Biomecánico - Tesis Josué</title>
+    <style>
+        :root {
+            --bg-color: #121212;
+            --panel-bg: #1e1e1e;
+            --text-main: #e0e0e0;
+            --accent: #00ff88;
+            --danger: #ff3333;
+            --warning: #ffb703;
+        }
+        
+        body { 
+            background: var(--bg-color); 
+            color: var(--text-main); 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        h1 { margin-top: 0; color: var(--accent); text-align: center; }
+        
+        /* Banner de Alertas */
+        #alerta-banner { 
+            width: 100%; 
+            max-width: 900px;
+            padding: 15px; 
+            font-size: 22px; 
+            font-weight: bold;
+            text-align: center;
+            border-radius: 8px;
+            transition: background-color 0.3s, color 0.3s; 
+            margin-bottom: 20px; 
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+        }
+        .normal { background: #2e7d32; color: white; }
+        .alerta { background: var(--danger); color: white; animation: pulse 1s infinite; }
+        
+        @keyframes pulse { 
+            0% { opacity: 1; }
+            50% { opacity: 0.8; box-shadow: 0 0 20px var(--danger); }
+            100% { opacity: 1; }
+        }
+        
+        /* Estructura del Dashboard */
+        .dashboard-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: center;
+            max-width: 1200px;
+            width: 100%;
+        }
+
+        .video-panel {
+            background: var(--panel-bg);
+            padding: 10px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        img#stream { border-radius: 8px; max-width: 100%; height: auto; display: block; }
+
+        .metrics-panel {
+            background: var(--panel-bg);
+            padding: 20px;
+            border-radius: 12px;
+            min-width: 250px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+        .metric-box {
+            background: #2a2a2a;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            border-left: 4px solid var(--accent);
+        }
+        .metric-value {
+            font-size: 36px;
+            font-weight: bold;
+            color: var(--accent);
+            margin-top: 5px;
+        }
+        
+        /* Estilo del Modal Antropométrico */
+        #setup-modal { 
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background: var(--panel-bg); 
+            padding: 30px; 
+            border-radius: 12px; 
+            width: 320px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.8);
+            text-align: center;
+        }
+        .modal-content input { 
+            display: block; 
+            margin: 15px auto; 
+            padding: 12px; 
+            width: 85%; 
+            border: 1px solid #444;
+            border-radius: 6px;
+            background: #222;
+            color: white;
+            font-size: 16px;
+            text-align: center;
+        }
+        .modal-content button { 
+            padding: 12px 25px; 
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer; 
+            background: var(--accent); 
+            color: #000; 
+            border: none; 
+            border-radius: 6px;
+            width: 93%;
+            margin-top: 10px;
+            transition: background 0.2s;
+        }
+        .modal-content button:hover { background: #00cc6a; }
+
+        /* Estilos del Panel de Reporte */
+        .btn-detener {
+            background-color: var(--danger);
+            color: white;
+            padding: 12px 20px;
+            font-size: 18px;
+            font-weight: bold;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 15px;
+            width: 100%;
+            transition: 0.3s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+        .btn-detener:hover { background-color: #cc0000; }
+        .btn-detener:disabled { background-color: #555; cursor: not-allowed; }
+
+        #panelReporte {
+            background: var(--panel-bg);
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 8px 15px rgba(0,0,0,0.5);
+            margin-top: 30px;
+            max-width: 900px;
+            width: 100%;
+            display: none;
+        }
+        .reporte-header {
+            color: var(--accent);
+            border-bottom: 2px solid #333;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        .feedback-text {
+            font-size: 18px;
+            line-height: 1.5;
+            background: #2a2a2a;
+            padding: 15px;
+            border-left: 5px solid var(--warning);
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .stats-grid {
+            display: flex;
+            justify-content: space-around;
+            background: #222;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .stat-item { text-align: center; }
+        .stat-label { color: #aaa; font-size: 14px; }
+        .stat-value { font-size: 24px; font-weight: bold; color: white; margin-top: 5px;}
+        #imgGrafica { width: 100%; border-radius: 8px; border: 1px solid #444; }
+
+    </style>
+</head>
+<body>
+
+    <div id="setup-modal">
+        <div class="modal-content">
+            <h2 style="color: var(--accent); margin-top: 0;">Medidas Clínicas</h2>
+            <p style="font-size: 13px; color: #aaa;">Ingresa longitudes para calibrar la validación anatómica</p>
+            <input type="number" id="femur" placeholder="Fémur (cm)" value="">
+            <input type="number" id="tibia" placeholder="Tibia (cm)" value="">
+            <input type="number" id="pie" placeholder="Pie (cm)" value="">
+            <input type="number" id="torso" placeholder="Torso (cm)" value="">
+            <button id="btn-iniciar" onclick="enviarDatos()">Calibrar Sistema</button>
+        </div>
+    </div>
+
+    <h1>Dashboard de Ciclismo Profesional</h1>
+
+    <div id="alerta-banner" class="normal">SISTEMA EN ESPERA...</div>
+    
+    <div class="dashboard-container">
+        <div class="video-panel">
+            <img id="stream" src="" alt="Esperando configuración..." width="640" height="480" style="background: #000;">
+            <button id="btnDetener" class="btn-detener" onclick="detenerEntrenamiento()" style="display: none;">
+                🛑 Finalizar Entrenamiento y Ver Reporte
+            </button>
+        </div>
+
+        <div class="metrics-panel">
+            <div class="metric-box">
+                <div style="color: #aaa; font-size: 14px;">Ángulo de Rodilla</div>
+                <div id="val-rodilla" class="metric-value">--°</div>
+            </div>
+            <div class="metric-box">
+                <div style="color: #aaa; font-size: 14px;">Perfil de Análisis</div>
+                <div id="val-perfil" class="metric-value" style="color: #fff; font-size: 24px;">--</div>
+            </div>
+            <div class="metric-box" style="border-left-color: #444;">
+                <div style="color: #aaa; font-size: 12px;">Validación (Ley Cosenos)</div>
+                <div style="color: var(--accent); font-weight: bold; margin-top: 5px;">ACTIVA</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="panelReporte">
+        <h2 class="reporte-header">📊 Reporte Biomecánico de la Sesión</h2>
+        
+        <div id="txtFeedback" class="feedback-text" style="text-align: left; font-weight: normal;">
+            Cargando diagnóstico de la Inteligencia Artificial...
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-item">
+                <div class="stat-label">Promedio de Flexión</div>
+                <div id="txtPromedio" class="stat-value">--°</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">Tiempo en Rango Óptimo</div>
+                <div id="txtOptimo" class="stat-value" style="color: var(--accent);">--%</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">Ciclos Analizados</div>
+                <div id="txtFrames" class="stat-value">--</div>
+            </div>
+        </div>
+
+        <h3 style="color: #aaa; text-align: center; margin-bottom: 10px;">Cinemática del Ángulo de Rodilla</h3>
+        <img id="imgGrafica" src="" alt="Gráfica de Rendimiento">
+    </div>
+    
+    <script>
+        const videoStream = document.getElementById('stream');
+        let intervaloMonitoreo; // Variable para controlar el ciclo de peticiones
+
+        async function enviarDatos() {
+            const btn = document.getElementById('btn-iniciar');
+            btn.innerText = "Enviando a Jetson...";
+            btn.disabled = true;
+
+            const data = {
+                femur: parseFloat(document.getElementById('femur').value) || 0,
+                tibia: parseFloat(document.getElementById('tibia').value) || 0,
+                pie: parseFloat(document.getElementById('pie').value) || 0,
+                torso: parseFloat(document.getElementById('torso').value) || 0
+            };
+            
+            try {
+                const res = await fetch('/api/config', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(data)
+                });
+                
+                if (res.ok) {
+                    document.getElementById('setup-modal').style.display = 'none';
+                    document.getElementById('alerta-banner').innerText = "SISTEMA CALIBRADO - PROCESANDO...";
+                    
+                    // Mostrar el botón de detener
+                    document.getElementById('btnDetener').style.display = 'block';
+                    
+                    // Activamos la cámara asíncronamente
+                    videoStream.src = "/video_feed";
+                    
+                    iniciarMonitoreo();
+                } else {
+                    throw new Error("El servidor rechazó los datos.");
+                }
+            } catch (error) {
+                console.error("Error de conexión:", error);
+                alert("No se pudo conectar con el servidor FastAPI.");
+                btn.innerText = "Reintentar";
+                btn.disabled = false;
+            }
+        }
+
+        function iniciarMonitoreo() {
+            intervaloMonitoreo = setInterval(async () => {
+                try {
+                    const res = await fetch('/api/estado');
+                    if (!res.ok) return;
+                    
+                    const data = await res.json();
+                    const banner = document.getElementById('alerta-banner');
+                    
+                    if (data.alerta) {
+                        banner.innerText = `⚠️ ${data.mensaje} ⚠️`;
+                        banner.className = 'alerta';
+                    } else {
+                        banner.innerText = `✅ ${data.mensaje}`;
+                        banner.className = 'normal';
+                    }
+
+                    document.getElementById('val-rodilla').innerText = `${data.angulo_rodilla}°`;
+                    document.getElementById('val-perfil').innerText = data.perfil;
+
+                } catch (err) {
+                    console.error("Error consultando estado:", err);
+                }
+            }, 200); 
+        }
+
+        // --- NUEVA FUNCIÓN PARA DETENER Y MOSTRAR REPORTE ---
+        async function detenerEntrenamiento() {
+            const btn = document.getElementById('btnDetener');
+            btn.innerText = "⏳ Generando Reporte IA...";
+            btn.disabled = true;
+
+            // Congelar el video y detener el monitoreo constante
+            videoStream.src = ""; 
+            clearInterval(intervaloMonitoreo);
+            document.getElementById('alerta-banner').innerText = "ENTRENAMIENTO FINALIZADO";
+            document.getElementById('alerta-banner').className = "normal";
+
+            try {
+                // Llamamos a la API que procesa el SQLite y genera la gráfica
+                const response = await fetch('/api/detener');
+                const data = await response.json();
+
+                if (data.error) {
+                    alert(data.error);
+                    btn.innerText = "Error. Intenta de nuevo";
+                    btn.disabled = false;
+                    return;
+                }
+
+                // Inyectamos los datos recibidos en el panel
+                document.getElementById('txtFeedback').innerHTML = `<strong>Diagnóstico:</strong> ${data.feedback}`;
+                document.getElementById('txtFrames').innerText = data.total;
+                document.getElementById('txtPromedio').innerText = data.promedio;
+                document.getElementById('txtOptimo').innerText = data.optimo;
+
+                // Mostramos la gráfica (Base64)
+                document.getElementById('imgGrafica').src = data.grafica;
+
+                // Animación de interfaz: Ocultar botón, mostrar reporte
+                btn.style.display = 'none';
+                document.getElementById('panelReporte').style.display = 'block';
+
+                // Scrollear suavemente hacia abajo para ver el reporte
+                document.getElementById('panelReporte').scrollIntoView({ behavior: 'smooth' });
+
+            } catch (error) {
+                console.error("Error al generar el reporte: ", error);
+                alert("Hubo un problema comunicándose con la Jetson para generar el reporte.");
+                btn.innerText = "Reintentar Reporte";
+                btn.disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>
